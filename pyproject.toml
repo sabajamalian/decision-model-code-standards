@@ -1,0 +1,29 @@
+[project]
+name = "decision-model-code-standards"
+version = "0.1.0"
+description = "Proof of concept: check configurable coding standards in pull requests with Microsoft-Decision-1."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = ["flask>=3.0", "pyyaml>=6.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = [".venv-conda"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM"]
+ignore = ["S101"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106", "S603", "S607"]
+"standards_checker/gitdiff.py" = ["S603", "S607"]
+"standards_checker/client.py" = ["S603"]

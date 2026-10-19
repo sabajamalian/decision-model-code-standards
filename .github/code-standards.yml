@@ -1,0 +1,134 @@
+# Coding standards checked by Microsoft-Decision-1 on every pull request.
+#
+# Each rule becomes one Decision-1 question per code unit (function, class or
+# module-level code). Edit this file to add, remove or tune standards; no code
+# changes are needed.
+#
+#   type: noul   Yes/no question. Decision-1 returns P(yes). The rule fires when
+#                P(yes) >= threshold. Phrase the question so "yes" = violation.
+#   type: score  Ordered scale (criteria listed low to high). Decision-1 returns
+#                a probability-weighted score. The rule fires when score < min_score.
+#   severity     error   -> annotation + fails the check
+#                warning -> annotation only
+#                off     -> skipped (same as enabled: false)
+#   paths        Optional globs; the rule only runs on matching files.
+
+settings:
+  deployment: decision-1            # Foundry deployment name (env DECISION_DEPLOYMENT overrides)
+  include: ["bookstore/**/*.py"]
+  exclude: ["tests/**"]
+  scope: changed                    # changed = files in the PR diff, all = whole repo
+  changed_lines_only: true          # only code units that overlap changed lines
+  context: >-
+    Python 3.12 Flask REST API for a bookstore. Data access uses sqlite3.
+    Request validation helpers live in bookstore/validation.py and raise ValidationError.
+  default_threshold: 0.6
+  max_chunk_lines: 150
+  max_questions_per_request: 10
+  concurrency: 4
+
+rules:
+  - id: no-hardcoded-secrets
+    description: Secrets must come from environment variables or a secret store, never literals in code.
+    type: noul
+    severity: error
+    threshold: 0.5
+    instructions: >-
+      Does this code assign a real-looking secret value (password, API key, access token,
+      private key, or a connection string containing credentials) as a string literal?
+    criteria:
+      true: A credential value is written directly in the source code as a literal.
+      false: No credential literals; any secrets are read from environment variables or configuration.
+
+  - id: parameterized-sql
+    description: SQL must use query parameters, not string formatting of values.
+    type: noul
+    severity: error
+    threshold: 0.5
+    instructions: >-
+      Does this code put runtime values into an SQL statement using f-strings, str.format,
+      % formatting or string concatenation, instead of passing them as query parameters?
+    criteria:
+      true: Values such as ids, names or user input are interpolated into SQL text.
+      false: Values are passed separately with ? or :name placeholders, or the code runs no SQL.
+
+  - id: no-swallowed-exceptions
+    description: No bare `except:` and no silently swallowed exceptions.
+    type: noul
+    severity: error
+    threshold: 0.6
+    instructions: >-
+      Does this code use a bare `except:` clause, or catch an exception and then ignore it
+      (pass, return a default, or only print) without logging or re-raising it?
+    criteria:
+      true: There is a bare except, or an exception is caught and silently discarded.
+      false: Exceptions are caught specifically and logged, re-raised or translated, or there is no exception handling.
+
+  - id: validate-request-input
+    description: Route handlers must validate request bodies and query parameters before use.
+    type: noul
+    severity: warning
+    threshold: 0.6
+    paths: ["bookstore/routes/**"]
+    instructions: >-
+      Is this a Flask route handler that uses request.json, request.get_json(), request.form
+      or request.args values directly without validating them first?
+    criteria:
+      true: The handler reads request data and uses it without checking presence, type or range.
+      false: Request data is validated (for example by a validate_* or pagination helper) before use, or the code reads no request data.
+
+  - id: correct-http-status
+    description: Responses must use the HTTP status code that matches the outcome.
+    type: noul
+    severity: warning
+    threshold: 0.6
+    paths: ["bookstore/routes/**"]
+    instructions: >-
+      Does this Flask route handler return the wrong HTTP status code for what happened,
+      such as 200 after creating a resource, 200 with an error message, or 500 for bad client input?
+    criteria:
+      true: At least one response uses a status code that does not match the outcome.
+      false: >-
+        Status codes match the outcome (200 for successful reads and updates, 201 for create,
+        204 for delete, errors raised as exceptions or returned with 4xx), or this is not a route handler.
+
+  - id: logging-not-print
+    description: Use the logging module, not print(), for diagnostics.
+    type: noul
+    severity: warning
+    threshold: 0.6
+    instructions: Does this code call print() to report errors, debug information or status?
+    criteria:
+      true: print() is used for diagnostics or error reporting.
+      false: The code uses logging (or does not report diagnostics at all) and does not call print().
+
+  - id: docstrings
+    description: Public functions and classes need a docstring.
+    type: noul
+    severity: warning
+    threshold: 0.7
+    instructions: >-
+      Is there a public function, method or class (name not starting with an underscore)
+      defined in this code that has no docstring?
+    criteria:
+      true: A public function, method or class is defined without a docstring.
+      false: Every public function, method and class here has a docstring, or none is defined.
+
+  - id: type-hints
+    description: Function parameters and return values should be annotated.
+    type: noul
+    severity: warning
+    enabled: false                  # flip to true to start enforcing
+    threshold: 0.7
+    instructions: Is there a function in this code whose parameters or return value lack type annotations?
+    criteria:
+      true: At least one parameter or return type is not annotated.
+      false: All parameters and return values are annotated, or no function is defined.
+
+  - id: readability
+    description: Code should be readable and maintainable.
+    type: score
+    severity: warning
+    min_score: 1.75                 # clean code in this repo scores ~2.4+, messy code < 1.5
+    instructions: How readable and maintainable is this code for another engineer on the team?
+    criteria: ["very poor", "poor", "acceptable", "good", "excellent"]
