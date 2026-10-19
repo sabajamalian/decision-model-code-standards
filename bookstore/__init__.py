@@ -12,6 +12,7 @@ from bookstore import db
 from bookstore.errors import register_error_handlers
 from bookstore.routes.authors import authors_bp
 from bookstore.routes.books import books_bp
+from bookstore.routes.reviews import reviews_bp
 
 
 def create_app(config: dict[str, Any] | None = None) -> Flask:
@@ -38,6 +39,7 @@ def create_app(config: dict[str, Any] | None = None) -> Flask:
     register_error_handlers(app)
     app.register_blueprint(books_bp)
     app.register_blueprint(authors_bp)
+    app.register_blueprint(reviews_bp)
 
     @app.get("/health")
     def health() -> tuple[Any, int]:
