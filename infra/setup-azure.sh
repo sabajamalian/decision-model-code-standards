@@ -57,8 +57,10 @@ CLIENT_ID=$(az identity show -g "$RESOURCE_GROUP" -n "$IDENTITY_NAME" --query cl
 PRINCIPAL_ID=$(az identity show -g "$RESOURCE_GROUP" -n "$IDENTITY_NAME" --query principalId -o tsv)
 
 log "Role assignment: Cognitive Services User on $FOUNDRY_ACCOUNT"
-existing=$(az role assignment list --assignee "$PRINCIPAL_ID" --scope "$ACCOUNT_ID" \
-  --role "Cognitive Services User" --query "length(@)" -o tsv)
+# Filter by principalId instead of --assignee, which needs a Graph lookup that
+# fails for a few minutes after a new managed identity is created.
+existing=$(az role assignment list --scope "$ACCOUNT_ID" --role "Cognitive Services User" \
+  --query "length([?principalId=='$PRINCIPAL_ID'])" -o tsv)
 if [ "$existing" = "0" ]; then
   az role assignment create --assignee-object-id "$PRINCIPAL_ID" --assignee-principal-type ServicePrincipal \
     --role "Cognitive Services User" --scope "$ACCOUNT_ID" -o none
