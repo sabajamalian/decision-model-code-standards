@@ -30,17 +30,13 @@ finding tells you *which* function broke *which* rule, not why.
 
 ## How it works
 
-```mermaid
-flowchart LR
-    PR["Pull request"] --> WF["code-standards workflow"]
-    WF -->|"OIDC, no secrets"| AZ["Azure login<br/>(managed identity)"]
-    CFG["code-standards.yml"] --> CK["standards_checker"]
-    WF --> CK
-    CK -->|"git diff"| CU["Changed functions<br/>and classes"]
-    CU -->|"state + questions"| D1["Microsoft-Decision-1<br/>(Foundry deployment)"]
-    D1 -->|"probabilities and scores"| CK
-    CK --> OUT["Annotations, job summary,<br/>PR comment, pass or fail"]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/how-it-works-dark.drawio.png">
+  <img alt="A pull request triggers the code-standards workflow, which signs in to Azure with OIDC through a managed identity and runs the standards_checker action. The checker reads the rules in .github/code-standards.yml, finds the changed functions and classes, sends each one with the rule questions to Microsoft-Decision-1, applies thresholds to the returned probabilities and scores, and reports inline annotations, one PR comment, a job summary and artifact, and a pass or fail result." src="docs/images/how-it-works-light.drawio.png">
+</picture>
+
+The diagram PNGs embed their draw.io source, so you can open either file in
+[draw.io](https://app.diagrams.net) to edit it.
 
 Each request looks like this. The `state` is the code unit with line numbers plus a short project
 context; the questions come straight from the YAML file.
@@ -280,6 +276,7 @@ tests/                             app tests and checker tests (no network calls
 .github/actions/decision-standards composite action
 .github/workflows/                 code-standards.yml (Decision-1) and ci.yml
 infra/setup-azure.sh               Azure deployment, identity, OIDC and repo variables
+docs/images/                       README diagrams (PNG with embedded draw.io source)
 ```
 
 ## License
