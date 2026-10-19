@@ -139,9 +139,13 @@ absolute ratings.
 
 ## Demo
 
-The [`demo/violations`](../../compare/main...demo/violations) branch adds `bookstore/routes/reviews.py`
-with a hardcoded API key, string-built SQL, a bare `except`, `print()` calls, unvalidated input and
-wrong status codes. Its pull request shows the failed check, the inline annotations and the results comment.
+Pull request [#1](https://github.com/sabajamalian/decision-model-code-standards/pull/1) (branch
+`demo/violations`, intentionally left open) adds `bookstore/routes/reviews.py` with hardcoded credentials,
+string-built SQL, a bare `except`, `print()` calls, unvalidated input and wrong status codes.
+
+Decision-1 checked 6 code units (the whole job took under 20 seconds) and reported 5 errors and 14
+warnings, which fails the check. The PR shows the inline annotations and the results comment. On `main`
+the same check passes with no findings across all 42 code units.
 
 ## Setup
 
