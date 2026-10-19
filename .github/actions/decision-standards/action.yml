@@ -108,12 +108,12 @@ runs:
             || echo "::warning::Could not create the PR comment (fork PRs get a read-only token)."
         fi
 
-    - name: Upload JSON results
+    - name: Upload report
       if: always()
       uses: actions/upload-artifact@v7
       with:
         name: decision-standards-report
-        path: ${{ runner.temp }}/decision-standards/report.json
+        path: ${{ runner.temp }}/decision-standards/
         if-no-files-found: ignore
 
     - name: Fail on error-severity violations

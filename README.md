@@ -20,7 +20,7 @@ On every pull request the workflow:
 4. Reports the results:
    - inline annotations on the changed code,
    - a job summary and a single PR comment that is updated on every push,
-   - a JSON artifact with every score,
+   - a report artifact (Markdown and JSON) with every score,
    - a failed check if any `error` standard is violated. `warning` standards annotate but never block.
 
 Decision-1 doesn't write prose. It answers typed questions with numbers: `noul` (yes/no) returns the
@@ -259,7 +259,7 @@ python -m pytest
   and use this for standards that are hard to express as static rules, like "status codes match the
   outcome" or "input is validated before use".
 - **Annotation limits.** GitHub shows at most 10 error and 10 warning annotations per step inline. The PR
-  comment and JSON artifact always list everything.
+  comment and report artifact always list everything.
 - **Fork pull requests** don't get OIDC tokens or write access, so the check can't call Azure or comment
   for PRs from forks. This setup is meant for branches in the same repository.
 - **Code leaves the repository.** Changed code is sent to your Foundry deployment. `DataZoneStandard`
