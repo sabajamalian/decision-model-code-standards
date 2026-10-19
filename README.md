@@ -154,7 +154,10 @@ permission to create deployments, managed identities and role assignments.
 
 - deploys `Microsoft-Decision-1` (default name `decision-1`, `DataZoneStandard`),
 - creates a user-assigned managed identity and grants it **Cognitive Services User** on the resource,
-- adds federated credentials for this repository's pull requests and `main` branch (OIDC, no stored secrets),
+- adds federated credentials for this repository's pull requests and `main` branch (OIDC, no stored secrets).
+  It reads the subject prefix from GitHub, because repositories created after July 15, 2026 use
+  [immutable subject claims](https://learn.microsoft.com/entra/workload-id/workload-identities-github-immutable-subjects)
+  such as `repo:owner@123/repo@456:pull_request`,
 - sets the repository variables the workflow reads.
 
 ```bash

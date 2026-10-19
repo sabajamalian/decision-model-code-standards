@@ -69,18 +69,34 @@ else
 fi
 
 log "Federated credentials for $GITHUB_REPO"
+# Repositories created, renamed or transferred after 2026-07-15 default to an immutable subject
+# (repo:owner@<owner_id>/repo@<repo_id>:...), so ask GitHub for the exact prefix.
+if [ "$(gh api "repos/${GITHUB_REPO}/actions/oidc/customization/sub" --jq .use_default)" != "true" ]; then
+  echo "This repository uses a custom OIDC subject template. Create the federated credentials" >&2
+  echo "manually with subjects that match that template." >&2
+  exit 1
+fi
+SUB_PREFIX=$(gh api "repos/${GITHUB_REPO}/actions/oidc/customization/sub" --jq '.sub_claim_prefix // empty')
+SUB_PREFIX="${SUB_PREFIX:-repo:${GITHUB_REPO}}"
+echo "OIDC subject prefix: $SUB_PREFIX"
+
 add_federated_credential() {
-  local name="$1" subject="$2"
-  if az identity federated-credential show -g "$RESOURCE_GROUP" --identity-name "$IDENTITY_NAME" -n "$name" -o none 2>/dev/null; then
+  local name="$1" subject="$2" current
+  current=$(az identity federated-credential show -g "$RESOURCE_GROUP" --identity-name "$IDENTITY_NAME" \
+    -n "$name" --query subject -o tsv 2>/dev/null || true)
+  if [ "$current" = "$subject" ]; then
     echo "Federated credential $name already exists."
     return
   fi
-  az identity federated-credential create -g "$RESOURCE_GROUP" --identity-name "$IDENTITY_NAME" -n "$name" \
+  local action=create
+  [ -n "$current" ] && action=update
+  az identity federated-credential "$action" -g "$RESOURCE_GROUP" --identity-name "$IDENTITY_NAME" -n "$name" \
     --issuer "https://token.actions.githubusercontent.com" --subject "$subject" \
     --audiences "api://AzureADTokenExchange" -o none
+  echo "Federated credential $name: $subject ($action)"
 }
-add_federated_credential "github-pull-request" "repo:${GITHUB_REPO}:pull_request"
-add_federated_credential "github-main" "repo:${GITHUB_REPO}:ref:refs/heads/main"
+add_federated_credential "github-pull-request" "${SUB_PREFIX}:pull_request"
+add_federated_credential "github-main" "${SUB_PREFIX}:ref:refs/heads/main"
 
 if [ "$SET_GITHUB_VARIABLES" = "true" ]; then
   log "GitHub repository variables on $GITHUB_REPO"
